@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/clSettings"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    tools:context=".ui.settings.SettingsFragment">
+
+    <TextView
+        android:id="@+id/tvLatitude"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:gravity="bottom"
+        android:paddingBottom="10dp"
+        android:text="@string/latitude"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/etLatitude"
+        android:layout_width="120dp"
+        android:layout_height="50dp"
+        android:gravity="center"
+        android:inputType="number|numberDecimal"
+        android:text="@string/default_latitude"
+        app:layout_constraintStart_toStartOf="@+id/etLongitude"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvLongitude"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:gravity="bottom"
+        android:paddingBottom="10dp"
+        android:text="@string/longitude"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvLatitude" />
+
+    <EditText
+        android:id="@+id/etLongitude"
+        android:layout_width="120dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:inputType="number|numberDecimal"
+        android:text="@string/default_longitude"
+        app:layout_constraintStart_toStartOf="@+id/etZipCode"
+        app:layout_constraintTop_toBottomOf="@+id/etLatitude" />
+
+    <TextView
+        android:id="@+id/tvZipCode"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:gravity="bottom"
+        android:paddingBottom="10dp"
+        android:text="@string/zip_code"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvLongitude" />
+
+    <EditText
+        android:id="@+id/etZipCode"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:inputType="number"
+        android:text="@string/default_zip"
+        app:layout_constraintStart_toStartOf="@+id/etDesiredAQI"
+        app:layout_constraintTop_toBottomOf="@+id/etLongitude" />
+
+    <TextView
+        android:id="@+id/tvDistance"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:gravity="bottom"
+        android:paddingBottom="10dp"
+        android:text="@string/distance"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvZipCode" />
+
+    <EditText
+        android:id="@+id/etDistance"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:inputType="number"
+        android:text="@string/default_distance"
+        app:layout_constraintStart_toStartOf="@+id/etDesiredAQI"
+        app:layout_constraintTop_toBottomOf="@+id/etZipCode" />
+
+    <TextView
+        android:id="@+id/tvDesiredAQI"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:gravity="bottom"
+        android:paddingBottom="10dp"
+        android:text="@string/desired_aqi"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvDate" />
+
+    <EditText
+        android:id="@+id/etDesiredAQI"
+        android:layout_width="75dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:inputType="number"
+        android:text="@string/default_aqi"
+        app:layout_constraintStart_toEndOf="@+id/tvDesiredAQI"
+        app:layout_constraintTop_toBottomOf="@+id/tvDateSelected" />
+
+    <TextView
+        android:id="@+id/tvDate"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:gravity="bottom"
+        android:paddingBottom="10dp"
+        android:text="@string/date"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvDistance" />
+
+    <TextView
+        android:id="@+id/tvDateSelected"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="16dp"
+        android:gravity="bottom"
+        android:paddingBottom="10dp"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:text="2019-10-20"
+        app:layout_constraintStart_toStartOf="@+id/etDesiredAQI"
+        app:layout_constraintTop_toBottomOf="@+id/etDistance" />
+
+    <Button
+        android:id="@+id/btnAcceptSettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/accept"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageView
+        android:id="@+id/ivSettingsSaved"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="32dp"
+        android:src="@drawable/ic_done"
+        app:layout_constraintBottom_toBottomOf="@+id/btnAcceptSettings"
+        app:layout_constraintStart_toEndOf="@+id/btnAcceptSettings"
+        app:layout_constraintTop_toTopOf="@+id/btnAcceptSettings"
+        android:visibility="gone"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

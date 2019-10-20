@@ -1,11 +1,8 @@
 package com.example.airwatcher.ui.map;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -19,15 +16,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+
 import com.example.airwatcher.R;
-import com.example.airwatcher.model.DataWAQI;
+import com.example.airwatcher.model.AirNow;
 import com.example.airwatcher.repository.ApiClient;
 import com.example.airwatcher.repository.ApiInterface;
 import com.example.airwatcher.repository.OnResponseListener;
-import com.example.airwatcher.repository.ApiInterfaceWAQI;
 import com.example.airwatcher.repository.WAQIClient;
 import com.example.airwatcher.utils.AQIUtils;
 import com.example.airwatcher.utils.AirNowUtils;
+import com.example.airwatcher.utils.DateUtils;
+import com.example.airwatcher.utils.PrefsUtils;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -35,48 +39,65 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class MapFragment extends Fragment {
 
     private final String TAG = MapFragment.class.getSimpleName();
     private GoogleMap map;
     private ApiInterface apiInterface;
+    private SharedPreferences sharedPreferences;
+    private double latitude;
+    private double longitude;
+    private String zipCode;
+    private String distance;
+    private String date;
+    private int aqi;
     private ProgressBar progressBar;
+    private int wAQIValueRecovered = 0;
 
     String codigoPostal = null;
     private double latitudeAnterior = 0;
     private double longitudAnterior = 0;
     private String privousZipcode = "";
-    private HashMap<String,LatLng> zipcodeLatLngs = new HashMap<String,LatLng>();
-    private int wAQIValueRecovered = 0;
+    private HashMap<String, LatLng> zipcodeLatLngs = new HashMap<String, LatLng>();
+    private ArrayList<AirNow> airNows;
 
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return this.getLayoutInflater().inflate(R.layout.map_fragment, container, false);
+        return this.getLayoutInflater().inflate(R.layout.fragment_map, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-//        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(R.string.menu_home);
+        setHasOptionsMenu(true);
+
         apiInterface = ApiClient.getClient().create(ApiInterface.class);
-        this.progressBar = view.findViewById(R.id.progressBar1);
+        sharedPreferences = getActivity().getSharedPreferences(PrefsUtils.PREFS_KEY, Context.MODE_PRIVATE);
+
+        airNows = new ArrayList<AirNow>();
+
+        latitude = Double.parseDouble(getActivity().getString(R.string.default_latitude));
+        longitude = Double.parseDouble(getActivity().getString(R.string.default_longitude));
+        zipCode = getActivity().getString(R.string.default_zip);
+        distance = getActivity().getString(R.string.default_distance);
+        date = DateUtils.getCurrentDate();
+        aqi = Integer.parseInt(getActivity().getString(R.string.default_aqi));
+
+        this.progressBar = view.findViewById(R.id.progressBar);
 
         setupMap();
     }
@@ -92,12 +113,27 @@ public class MapFragment extends Fragment {
 
                 map.clear(); //clear old markers
 
+                if (sharedPreferences != null) {
+                    if (sharedPreferences.contains(PrefsUtils.LAT_KEY)
+                            && sharedPreferences.contains(PrefsUtils.LONG_KEY)
+                            && sharedPreferences.contains(PrefsUtils.ZIP_KEY)
+                            && sharedPreferences.contains(PrefsUtils.DATE_KEY)
+                            && sharedPreferences.contains(PrefsUtils.AQI_KEY)) {
+                        latitude = Double.parseDouble(sharedPreferences.getString(PrefsUtils.LAT_KEY, String.valueOf(latitude)));
+                        longitude = Double.parseDouble(sharedPreferences.getString(PrefsUtils.LONG_KEY, String.valueOf(longitude)));
+                        zipCode = sharedPreferences.getString(PrefsUtils.ZIP_KEY, zipCode);
+                        distance = sharedPreferences.getString(PrefsUtils.DIST_KEY, distance);
+                        date = sharedPreferences.getString(PrefsUtils.DATE_KEY, date);
+                        aqi = sharedPreferences.getInt(PrefsUtils.AQI_KEY, aqi);
+                    }
+                }
+
 
                 CameraPosition googlePlex = CameraPosition.builder()
                         //.target(new LatLng(37.9805272,-1.1621948))//Murcia
                         //.target(new LatLng(38.901846, -76.988518))//Washington D. C, zipcode 20002
                         //.target(new LatLng(39.772682, -86.164683))//Indianapolis, 46202
-                        .target(new LatLng(39.781788, -86.200048))//Philadelfia zipcode 19111
+                        .target(new LatLng(latitude, longitude))//Philadelfia zipcode 19111
                         .zoom(10)
                         .bearing(0)
                         .tilt(45)
@@ -107,13 +143,13 @@ public class MapFragment extends Fragment {
                 map.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener() {
                     @Override
                     public void onCameraMove() {
-                        final Double newLatitude =  map.getCameraPosition().target.latitude;
+                        final Double newLatitude = map.getCameraPosition().target.latitude;
                         final Double newLongitude = map.getCameraPosition().target.longitude;
 
                         if (latitudeAnterior == 0) {
                             latitudeAnterior = newLatitude;
                         }
-                        if ( longitudAnterior == 0) {
+                        if (longitudAnterior == 0) {
                             longitudAnterior = newLongitude;
                         }
 
@@ -125,11 +161,9 @@ public class MapFragment extends Fragment {
                         newLocation.setLatitude(newLatitude);
                         newLocation.setLongitude(newLongitude);
 
-                        float distance = previousLocation.distanceTo(newLocation)/1000;//Meter in Kilometer
+                        float distance = previousLocation.distanceTo(newLocation) / 1000;//Meter in Kilometer
 
-
-
-                        if ( distance<10) return;
+                        if (distance < 10) return;
 
                         latitudeAnterior = newLatitude;
                         longitudAnterior = newLongitude;
@@ -137,8 +171,8 @@ public class MapFragment extends Fragment {
 
                         List<Address> direccion = null;
                         try {
-                            direccion = geocoder.getFromLocation(newLatitude, newLongitude,1);
-                            if ( direccion.size() > 0 && direccion.get(0).getPostalCode() != null) {
+                            direccion = geocoder.getFromLocation(newLatitude, newLongitude, 1);
+                            if (direccion.size() > 0 && direccion.get(0).getPostalCode() != null) {
                                 Log.d("GECODER", "Codigo postal: " + direccion.get(0).getPostalCode());
                                 privousZipcode = direccion.get(0).getPostalCode();
                             }
@@ -148,7 +182,7 @@ public class MapFragment extends Fragment {
                         }
 
 
-                        if(!zipcodeLatLngs.containsKey(privousZipcode)) {
+                        if (!zipcodeLatLngs.containsKey(privousZipcode)) {
 
                             zipcodeLatLngs.put(privousZipcode, new LatLng(newLatitude, newLongitude));
 
@@ -158,13 +192,13 @@ public class MapFragment extends Fragment {
                                 @Override
                                 public void responseReceived() {
                                     //TODO
-                                    Integer AQI =  WAQIClient.getInstance().getAQI();
-                                    LatLng latLng = new LatLng(newLatitude,newLongitude);
+                                    Integer AQI = WAQIClient.getInstance().getAQI();
+                                    LatLng latLng = new LatLng(newLatitude, newLongitude);
                                     Integer circleColor = AQIUtils.getInstance().getColor(AQI);
                                     map.addMarker(new MarkerOptions()
                                             .position(latLng)
-                                            .title("WAQI: "+ AQI)
-                                            .snippet("Zipcode: "+ privousZipcode)).showInfoWindow();
+                                            .title("WAQI: " + AQI)
+                                            .snippet("Zipcode: " + privousZipcode)).showInfoWindow();
 
 
                                     map.addCircle(new CircleOptions()
@@ -174,13 +208,13 @@ public class MapFragment extends Fragment {
                                             .strokeColor(circleColor)
                                             .fillColor(circleColor)
                                     );
-
                                     wAQIValueRecovered = AQI;
                                 }
+
                             });
 
                             //AirNowApi call
-                            AirNowUtils.getInstance().getAirNowByZipCode(privousZipcode, "2019-10-20", new OnResponseListener() {
+                            AirNowUtils.getInstance().getAirNowByZipCode(privousZipcode, date, new OnResponseListener() {
                                 @Override
                                 public void responseReceived() {
 
@@ -201,44 +235,67 @@ public class MapFragment extends Fragment {
                     }
                 });
 
+                map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+                    @Override
+                    public boolean onMarkerClick(Marker marker) {
+                        double latitude = marker.getPosition().latitude;
+                        double longitude = marker.getPosition().longitude;
+                        // TODO: put arguments
+                        /*Bundle b = new Bundle();
+                        b.putDouble("MARKER_LAT", latitude);
+                        b.putDouble("MARKER_LONG", longitude);
+                        ((HomeActivity) getActivity()).showMarkerDetail(b);*/
+
+                        Intent i = new Intent(getActivity(), MapDetailActivity.class);
+                        i.putExtra("MARKER_LAT", latitude);
+                        i.putExtra("MARKER_LONG", longitude);
+                        startActivity(i);
+
+                        return false;
+                    }
+                });
+
+            }
+
+            private void addAQI(HashMap<String, Integer> zipCodesInfo, Iterator<String> zipCodesIt) {
+                String zipCode = zipCodesIt.next();
+
+                Integer AQI = zipCodesInfo.get(zipCode).intValue();
+                Integer circleColor = AQIUtils.getInstance().getColor(AQI);
+                map.addMarker(new MarkerOptions()
+                        .position(new LatLng(zipcodeLatLngs.get(zipCode).latitude, zipcodeLatLngs.get(zipCode).longitude))
+                        .title("AQI: " + AQI)
+                        .snippet("Zipcode: " + zipCode)).showInfoWindow();
+                //.snippet("AQI: "+ AirNowUtils.getInstance().getAQI()));
+
+                if (AQI > 0 && AQI > wAQIValueRecovered)  {
+                    map.addCircle(new CircleOptions()
+                            .center(new LatLng(zipcodeLatLngs.get(zipCode).latitude,zipcodeLatLngs.get(zipCode).longitude))
+                            .radius(1000)
+                            .strokeWidth(1)
+                            .strokeColor(circleColor)
+                            .fillColor(circleColor)
+                    );
+                }
             }
         });
 
     }
 
-    private void addAQI(HashMap<String, Integer> zipCodesInfo, Iterator<String> zipCodesIt) {
-        String zipCode = zipCodesIt.next();
-
-        Integer AQI = zipCodesInfo.get(zipCode).intValue();
-        Integer circleColor = AQIUtils.getInstance().getColor(AQI);
-
-
-            map.addMarker(new MarkerOptions()
-                    .position(new LatLng(zipcodeLatLngs.get(zipCode).latitude,zipcodeLatLngs.get(zipCode).longitude))
-                    .title("AQI: "+ AQI)
-                    .snippet("Zipcode: "+ zipCode)).showInfoWindow();
-
-            //.snippet("AQI: "+ AirNowUtils.getInstance().getAQI()));
-        if (AQI > 0 && AQI > wAQIValueRecovered)  {
-            map.addCircle(new CircleOptions()
-                    .center(new LatLng(zipcodeLatLngs.get(zipCode).latitude,zipcodeLatLngs.get(zipCode).longitude))
-                    .radius(1000)
-                    .strokeWidth(1)
-                    .strokeColor(circleColor)
-                    .fillColor(circleColor)
-            );
-        }
-
+    @Override
+    public void onResume() {
+        super.onResume();
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(R.string.menu_home);
     }
 
-    private void visible (Boolean visible){
-        if ( visible ) {
+    private void visible(Boolean visible) {
+        if (visible) {
             this.progressBar.setVisibility(View.VISIBLE);
-        } else{
+        } else {
             this.progressBar.setVisibility(View.GONE);
         }
     }
-    
+
     private BitmapDescriptor bitmapDescriptorFromVector(Context context, int vectorResId) {
         Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
         vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());

@@ -1,18 +1,44 @@
 <resources>
     <string name="app_name">AirWatcher</string>
     <string name="title_activity_home">HomeActivity</string>
+    <string name="title_activity_detail">Detail</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Android Studio</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_title">AirWatcher</string>
+    <string name="nav_header_subtitle">Nasa App Space Challenge</string>
     <string name="nav_header_desc">Navigation header</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_clean">Clean Areas</string>
+    <string name="action_warning">Warning Areas</string>
 
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_slideshow">Slideshow</string>
-    <string name="menu_tools">Tools</string>
+    <string name="menu_settings">Settings</string>
     <string name="menu_share">Share</string>
     <string name="menu_send">Send</string>
     <string name="title_map_fragment">Map</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="aqi_error">AQI value must be in 0 to 500 range</string>
+    <string name="latitude_error">Latitude value must be in -90 to 90 range</string>
+    <string name="longitude_error">Longitude value must be in -180 to 180 range</string>
+    <string name="zip_error">Zip code must have a valid format</string>
+    <string name="distance_error">Distance value must be 0 or greater</string>
+    <string name="accept">Accept</string>
+    <string name="latitude">Latitude:</string>
+    <string name="longitude">Longitude:</string>
+    <string name="zip_code">Zip Code:</string>
+    <string name="distance">Distance:</string>
+    <string name="desired_aqi">Desired AQI:</string>
+    <string name="settings_error">Please, fill all fields</string>
+
+    <!-- Default settings -->
+    <string name="default_latitude">38.901846</string>
+    <string name="default_longitude">-76.988518</string>
+    <string name="default_zip">20002</string>
+    <string name="default_distance">25</string>
+    <string name="default_aqi">50</string>
+    <string name="date">Date:</string>
+
 </resources>

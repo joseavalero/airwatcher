@@ -15,7 +15,6 @@ public class ApiClient {
     private static Retrofit retrofitAirAQ = null;
 
     public static Retrofit getClient() {
-
         retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
