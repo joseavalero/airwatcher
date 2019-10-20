@@ -62,6 +62,7 @@ public class MapFragment extends Fragment {
     private double longitudAnterior = 0;
     private String privousZipcode = "";
     private HashMap<String,LatLng> zipcodeLatLngs = new HashMap<String,LatLng>();
+    private int wAQIValueRecovered = 0;
 
 
     @Nullable
@@ -92,12 +93,11 @@ public class MapFragment extends Fragment {
                 map.clear(); //clear old markers
 
 
-
                 CameraPosition googlePlex = CameraPosition.builder()
                         //.target(new LatLng(37.9805272,-1.1621948))//Murcia
                         //.target(new LatLng(38.901846, -76.988518))//Washington D. C, zipcode 20002
                         //.target(new LatLng(39.772682, -86.164683))//Indianapolis, 46202
-                        .target(new LatLng(40.062782, -75.077520))//Philadelfia zipcode 19111
+                        .target(new LatLng(39.781788, -86.200048))//Philadelfia zipcode 19111
                         .zoom(10)
                         .bearing(0)
                         .tilt(45)
@@ -126,6 +126,8 @@ public class MapFragment extends Fragment {
                         newLocation.setLongitude(newLongitude);
 
                         float distance = previousLocation.distanceTo(newLocation)/1000;//Meter in Kilometer
+
+
 
                         if ( distance<10) return;
 
@@ -172,6 +174,8 @@ public class MapFragment extends Fragment {
                                             .strokeColor(circleColor)
                                             .fillColor(circleColor)
                                     );
+
+                                    wAQIValueRecovered = AQI;
                                 }
                             });
 
@@ -207,19 +211,24 @@ public class MapFragment extends Fragment {
 
         Integer AQI = zipCodesInfo.get(zipCode).intValue();
         Integer circleColor = AQIUtils.getInstance().getColor(AQI);
-        map.addMarker(new MarkerOptions()
-                .position(new LatLng(zipcodeLatLngs.get(zipCode).latitude,zipcodeLatLngs.get(zipCode).longitude))
-                .title("AQI: "+ AQI)
-                .snippet("Zipcode: "+ zipCode)).showInfoWindow();
-        //.snippet("AQI: "+ AirNowUtils.getInstance().getAQI()));
 
-        map.addCircle(new CircleOptions()
-                .center(new LatLng(zipcodeLatLngs.get(zipCode).latitude,zipcodeLatLngs.get(zipCode).longitude))
-                .radius(1000)
-                .strokeWidth(1)
-                .strokeColor(circleColor)
-                .fillColor(circleColor)
-        );
+
+            map.addMarker(new MarkerOptions()
+                    .position(new LatLng(zipcodeLatLngs.get(zipCode).latitude,zipcodeLatLngs.get(zipCode).longitude))
+                    .title("AQI: "+ AQI)
+                    .snippet("Zipcode: "+ zipCode)).showInfoWindow();
+
+            //.snippet("AQI: "+ AirNowUtils.getInstance().getAQI()));
+        if (AQI > 0 && AQI > wAQIValueRecovered)  {
+            map.addCircle(new CircleOptions()
+                    .center(new LatLng(zipcodeLatLngs.get(zipCode).latitude,zipcodeLatLngs.get(zipCode).longitude))
+                    .radius(1000)
+                    .strokeWidth(1)
+                    .strokeColor(circleColor)
+                    .fillColor(circleColor)
+            );
+        }
+
     }
 
     private void visible (Boolean visible){
