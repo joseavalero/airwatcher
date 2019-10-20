@@ -12,6 +12,9 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
@@ -24,6 +27,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.airwatcher.R;
 import com.example.airwatcher.model.AirNow;
+import com.example.airwatcher.model.MarkerModel;
 import com.example.airwatcher.repository.ApiClient;
 import com.example.airwatcher.repository.ApiInterface;
 import com.example.airwatcher.repository.OnResponseListener;
@@ -51,7 +55,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-public class MapFragment extends Fragment {
+public class MapFragment extends Fragment{
 
     private final String TAG = MapFragment.class.getSimpleName();
     private GoogleMap map;
@@ -71,7 +75,7 @@ public class MapFragment extends Fragment {
     private double longitudAnterior = 0;
     private String privousZipcode = "";
     private HashMap<String, LatLng> zipcodeLatLngs = new HashMap<String, LatLng>();
-    private ArrayList<AirNow> airNows;
+    private ArrayList<MarkerModel> markers;
 
 
     @Nullable
@@ -88,7 +92,7 @@ public class MapFragment extends Fragment {
         apiInterface = ApiClient.getClient().create(ApiInterface.class);
         sharedPreferences = getActivity().getSharedPreferences(PrefsUtils.PREFS_KEY, Context.MODE_PRIVATE);
 
-        airNows = new ArrayList<AirNow>();
+        markers = new ArrayList<MarkerModel>();
 
         latitude = Double.parseDouble(getActivity().getString(R.string.default_latitude));
         longitude = Double.parseDouble(getActivity().getString(R.string.default_longitude));
@@ -140,9 +144,9 @@ public class MapFragment extends Fragment {
                         .build();
                 map.animateCamera(CameraUpdateFactory.newCameraPosition(googlePlex), 1000, null);
 
-                map.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener() {
+                map.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
                     @Override
-                    public void onCameraMove() {
+                    public void onCameraIdle() {
                         final Double newLatitude = map.getCameraPosition().target.latitude;
                         final Double newLongitude = map.getCameraPosition().target.longitude;
 
@@ -195,6 +199,8 @@ public class MapFragment extends Fragment {
                                     Integer AQI = WAQIClient.getInstance().getAQI();
                                     LatLng latLng = new LatLng(newLatitude, newLongitude);
                                     Integer circleColor = AQIUtils.getInstance().getColor(AQI);
+
+                                    markers.add(new MarkerModel(privousZipcode, newLatitude, newLongitude, AQI, circleColor));
                                     map.addMarker(new MarkerOptions()
                                             .position(latLng)
                                             .title("WAQI: " + AQI)
@@ -262,20 +268,25 @@ public class MapFragment extends Fragment {
 
                 Integer AQI = zipCodesInfo.get(zipCode).intValue();
                 Integer circleColor = AQIUtils.getInstance().getColor(AQI);
-                map.addMarker(new MarkerOptions()
-                        .position(new LatLng(zipcodeLatLngs.get(zipCode).latitude, zipcodeLatLngs.get(zipCode).longitude))
-                        .title("AQI: " + AQI)
-                        .snippet("Zipcode: " + zipCode)).showInfoWindow();
-                //.snippet("AQI: "+ AirNowUtils.getInstance().getAQI()));
 
-                if (AQI > 0 && AQI > wAQIValueRecovered)  {
-                    map.addCircle(new CircleOptions()
-                            .center(new LatLng(zipcodeLatLngs.get(zipCode).latitude,zipcodeLatLngs.get(zipCode).longitude))
-                            .radius(1000)
-                            .strokeWidth(1)
-                            .strokeColor(circleColor)
-                            .fillColor(circleColor)
-                    );
+                if (zipcodeLatLngs.get(zipCode) != null) {
+                    markers.add(new MarkerModel(privousZipcode, zipcodeLatLngs.get(zipCode).latitude, zipcodeLatLngs.get(zipCode).longitude, AQI, circleColor));
+
+                    map.addMarker(new MarkerOptions()
+                            .position(new LatLng(zipcodeLatLngs.get(zipCode).latitude, zipcodeLatLngs.get(zipCode).longitude))
+                            .title("AQI: " + AQI)
+                            .snippet("Zipcode: " + zipCode)).showInfoWindow();
+                    //.snippet("AQI: "+ AirNowUtils.getInstance().getAQI()));
+
+                    if (AQI > 0 && AQI > wAQIValueRecovered)  {
+                        map.addCircle(new CircleOptions()
+                                .center(new LatLng(zipcodeLatLngs.get(zipCode).latitude,zipcodeLatLngs.get(zipCode).longitude))
+                                .radius(1000)
+                                .strokeWidth(1)
+                                .strokeColor(circleColor)
+                                .fillColor(circleColor)
+                        );
+                    }
                 }
             }
         });
@@ -303,6 +314,66 @@ public class MapFragment extends Fragment {
         Canvas canvas = new Canvas(bitmap);
         vectorDrawable.draw(canvas);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_map, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_warning:
+                // TODO: Color circle
+                // CLean markers
+                if (markers.size() > 0) {
+                    map.clear();
+                    for(MarkerModel m : markers) {
+                        if (m.getAQI() > Integer.parseInt(getString(R.string.default_aqi))) {
+                            map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(m.getLatitude(), m.getLongitude()))
+                                    .title("AQI: " + m.getAQI())).showInfoWindow();
+                            map.addCircle(new CircleOptions()
+                                    .center(new LatLng(m.getLatitude(), m.getLongitude()))
+                                    .radius(1000)
+                                    .strokeWidth(10)
+                                    .strokeColor(m.getColor())
+                                    .fillColor(m.getColor())
+                            );
+                        }
+                    }
+                }
+
+                return true;
+            case R.id.action_clean:
+                // TODO: Color circle
+                // CLean markers
+                if (markers.size() > 0) {
+                    map.clear();
+                    for(MarkerModel m : markers) {
+                        if (m.getAQI() <= Integer.parseInt(getString(R.string.default_aqi))) {
+                            map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(m.getLatitude(), m.getLongitude()))
+                                    .title("AQI: " + m.getAQI())).showInfoWindow();
+                            map.addCircle(new CircleOptions()
+                                    .center(new LatLng(m.getLatitude(), m.getLongitude()))
+                                    .radius(1000)
+                                    .strokeWidth(10)
+                                    .strokeColor(m.getColor())
+                                    .fillColor(m.getColor())
+                            );
+                        }
+                    }
+                }
+
+                return true;
+            default:
+                break;
+        }
+
+        return false;
     }
 }
 
